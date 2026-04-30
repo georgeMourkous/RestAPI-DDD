@@ -125,7 +125,7 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
             migrationBuilder.InsertData(
                 table: "Service",
                 columns: new[] { "Id", "Description", "Name" },
-                values: new object[] { 1, "Default seeded service lookup value.", "Core Service" });
+                values: new object[] { 1, "Default seeded service value.", "Core Service" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Package_Name",

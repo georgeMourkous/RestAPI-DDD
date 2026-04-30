@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RestApiDdd.Infrastructure.Caching;
 using RestApiDdd.Infrastructure.Data;
 using RestApiDdd.Infrastructure.Events;
 using RestApiDdd.Infrastructure.Repositories;
@@ -19,10 +20,11 @@ public static class DependencyInjection
         services.AddMemoryCache();
 
         services.AddScoped<IDomainEventDispatcher, LoggingDomainEventDispatcher>();
+        services.AddSingleton<ICacheProvider, MemoryCacheProvider>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         services.AddScoped<IPackageRepository, PackageRepository>();
-        services.AddScoped<ILookupRepository, LookupRepository>();
+        services.AddScoped<IServiceRepository, ServiceRepository>();
 
         return services;
     }

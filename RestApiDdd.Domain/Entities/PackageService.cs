@@ -19,7 +19,7 @@ public sealed class PackageService : Entity
 
     public int ServiceId { get; private set; }
 
-    public ServiceLookup? Service { get; private set; }
+    public Service? Service { get; private set; }
 
     public int DefaultInstances { get; private set; }
 

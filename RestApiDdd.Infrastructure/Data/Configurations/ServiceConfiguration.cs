@@ -1,16 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using RestApiDdd.Domain.Entities;
+using ServiceAggregate = RestApiDdd.Domain.Entities.Service;
 
 namespace RestApiDdd.Infrastructure.Data.Configurations;
 
-internal sealed class ServiceLookupConfiguration : IEntityTypeConfiguration<ServiceLookup>
+internal sealed class ServiceConfiguration : IEntityTypeConfiguration<ServiceAggregate>
 {
-    public void Configure(EntityTypeBuilder<ServiceLookup> builder)
+    public void Configure(EntityTypeBuilder<ServiceAggregate> builder)
     {
         builder.ToTable("Service");
 
         builder.HasKey(service => service.Id);
+
+        builder.Ignore(service => service.DomainEvents);
 
         builder.Property(service => service.Name)
             .HasMaxLength(255)
@@ -26,7 +28,7 @@ internal sealed class ServiceLookupConfiguration : IEntityTypeConfiguration<Serv
         {
             Id = 1,
             Name = "Core Service",
-            Description = "Default seeded service lookup value."
+            Description = "Default seeded service value."
         });
     }
 }

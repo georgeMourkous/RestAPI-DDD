@@ -6,8 +6,10 @@
 
 - `RestApiDdd.Api`: ASP.NET Core REST API, JWT authentication, role authorization filter, exception middleware.
 - `RestApiDdd.Service`: DTOs, mapping, repository abstractions, unit of work contract, CQRS commands and queries.
-- `RestApiDdd.Domain`: package aggregate, entities, business validation, domain events.
-- `RestApiDdd.Infrastructure`: EF Core 10 SQL Server DbContext, mappings, repositories, cached lookups, migrations.
+- `RestApiDdd.Domain`: package and service aggregate roots, entities, business validation, domain events.
+- `RestApiDdd.Infrastructure`: EF Core 10 SQL Server DbContext, mappings, repositories, centralized cache abstraction, migrations.
+
+`Service` is modeled as its own aggregate root with `IServiceRepository`. `PackageRepository` owns package-category CRUD/read methods, and cached reads flow through `ICacheProvider` so the backing cache can move from memory cache to Redis later without changing repository consumers.
 
 ## Package Resource
 

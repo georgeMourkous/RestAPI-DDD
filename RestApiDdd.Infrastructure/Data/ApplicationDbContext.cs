@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RestApiDdd.Domain.Common;
 using RestApiDdd.Domain.Entities;
 using RestApiDdd.Service.Abstractions;
+using ServiceAggregate = RestApiDdd.Domain.Entities.Service;
 
 namespace RestApiDdd.Infrastructure.Data;
 
@@ -9,7 +10,7 @@ public sealed class ApplicationDbContext(
     DbContextOptions<ApplicationDbContext> options,
     IDomainEventDispatcher domainEventDispatcher) : DbContext(options)
 {
-    public DbSet<ServiceLookup> Services => Set<ServiceLookup>();
+    public DbSet<ServiceAggregate> Services => Set<ServiceAggregate>();
 
     public DbSet<PackageCategory> PackageCategories => Set<PackageCategory>();
 

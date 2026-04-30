@@ -2,13 +2,13 @@ using RestApiDdd.Domain.Common;
 
 namespace RestApiDdd.Domain.Entities;
 
-public sealed class ServiceLookup : Entity
+public sealed class Service : AggregateRoot
 {
-    private ServiceLookup()
+    private Service()
     {
     }
 
-    public ServiceLookup(string name, string? description)
+    public Service(string name, string? description)
     {
         Update(name, description);
     }

@@ -7,9 +7,9 @@ namespace RestApiDdd.Service.Packages;
 
 internal sealed class PatchPackageCommandHandler(
     IPackageRepository packageRepository,
-    ILookupRepository lookupRepository,
     IUnitOfWork unitOfWork,
-    IClock clock) : ICommandHandler<PatchPackageCommand, Unit>
+    IClock clock,
+    PackageReferenceValidator referenceValidator) : ICommandHandler<PatchPackageCommand, Unit>
 {
     public async Task<Unit> HandleAsync(PatchPackageCommand command, CancellationToken cancellationToken = default)
     {
@@ -31,7 +31,10 @@ internal sealed class PatchPackageCommandHandler(
             })
             .ToList();
 
-        await EnsureCanUseReferencesAsync(categoryId, serviceDetails.Select(service => service.ServiceId), cancellationToken);
+        await referenceValidator.EnsureCanUseReferencesAsync(
+            categoryId,
+            serviceDetails.Select(service => service.ServiceId),
+            cancellationToken);
 
         var name = command.Package.Name ?? package.Name;
         if (!string.Equals(name, package.Name, StringComparison.OrdinalIgnoreCase)
@@ -65,28 +68,5 @@ internal sealed class PatchPackageCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
-    }
-
-    private async Task EnsureCanUseReferencesAsync(
-        int packageCategoryId,
-        IEnumerable<int> serviceIds,
-        CancellationToken cancellationToken)
-    {
-        var errors = new List<string>();
-        if (!await lookupRepository.PackageCategoryExistsAsync(packageCategoryId, cancellationToken))
-        {
-            errors.Add($"Package category {packageCategoryId} does not exist.");
-        }
-
-        var requestedServiceIds = serviceIds.Distinct().ToArray();
-        var existingServiceIds = await lookupRepository.GetExistingServiceIdsAsync(requestedServiceIds, cancellationToken);
-        errors.AddRange(requestedServiceIds
-            .Where(serviceId => !existingServiceIds.Contains(serviceId))
-            .Select(serviceId => $"Service {serviceId} does not exist."));
-
-        if (errors.Count > 0)
-        {
-            throw new ApplicationValidationException(errors);
-        }
     }
 }

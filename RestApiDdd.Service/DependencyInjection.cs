@@ -15,6 +15,7 @@ public static class DependencyInjection
 
         services.AddScoped<IQueryHandler<GetPackagesQuery, IReadOnlyList<PackageDto>>, GetPackagesQueryHandler>();
         services.AddScoped<IQueryHandler<GetPackageByIdQuery, PackageDto>, GetPackageByIdQueryHandler>();
+        services.AddScoped<PackageReferenceValidator>();
         services.AddScoped<ICommandHandler<CreatePackageCommand, PackageDto>, CreatePackageCommandHandler>();
         services.AddScoped<ICommandHandler<UpdatePackageCommand, Unit>, UpdatePackageCommandHandler>();
         services.AddScoped<ICommandHandler<PatchPackageCommand, Unit>, PatchPackageCommandHandler>();

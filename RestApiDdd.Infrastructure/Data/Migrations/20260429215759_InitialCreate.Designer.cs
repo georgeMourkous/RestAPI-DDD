@@ -173,7 +173,7 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
                     b.ToTable("PackageService", (string)null);
                 });
 
-            modelBuilder.Entity("RestApiDdd.Domain.Entities.ServiceLookup", b =>
+            modelBuilder.Entity("RestApiDdd.Domain.Entities.Service", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -201,7 +201,7 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Default seeded service lookup value.",
+                            Description = "Default seeded service value.",
                             Name = "Core Service"
                         });
                 });
@@ -236,7 +236,7 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("RestApiDdd.Domain.Entities.ServiceLookup", "Service")
+                    b.HasOne("RestApiDdd.Domain.Entities.Service", "Service")
                         .WithMany()
                         .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Restrict)

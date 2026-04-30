@@ -9,13 +9,13 @@ namespace RestApiDdd.Service.Packages;
 
 internal sealed class CreatePackageCommandHandler(
     IPackageRepository packageRepository,
-    ILookupRepository lookupRepository,
     IUnitOfWork unitOfWork,
-    IClock clock) : ICommandHandler<CreatePackageCommand, PackageDto>
+    IClock clock,
+    PackageReferenceValidator referenceValidator) : ICommandHandler<CreatePackageCommand, PackageDto>
 {
     public async Task<PackageDto> HandleAsync(CreatePackageCommand command, CancellationToken cancellationToken = default)
     {
-        await EnsureCanUseReferencesAsync(
+        await referenceValidator.EnsureCanUseReferencesAsync(
             command.Package.PackageCategoryId,
             command.Package.Services.Select(service => service.ServiceId),
             cancellationToken);
@@ -40,28 +40,5 @@ internal sealed class CreatePackageCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return package.ToDto(clock.UtcNow);
-    }
-
-    private async Task EnsureCanUseReferencesAsync(
-        int packageCategoryId,
-        IEnumerable<int> serviceIds,
-        CancellationToken cancellationToken)
-    {
-        var errors = new List<string>();
-        if (!await lookupRepository.PackageCategoryExistsAsync(packageCategoryId, cancellationToken))
-        {
-            errors.Add($"Package category {packageCategoryId} does not exist.");
-        }
-
-        var requestedServiceIds = serviceIds.Distinct().ToArray();
-        var existingServiceIds = await lookupRepository.GetExistingServiceIdsAsync(requestedServiceIds, cancellationToken);
-        errors.AddRange(requestedServiceIds
-            .Where(serviceId => !existingServiceIds.Contains(serviceId))
-            .Select(serviceId => $"Service {serviceId} does not exist."));
-
-        if (errors.Count > 0)
-        {
-            throw new ApplicationValidationException(errors);
-        }
     }
 }

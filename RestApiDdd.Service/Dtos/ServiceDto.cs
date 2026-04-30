@@ -1,6 +1,6 @@
 namespace RestApiDdd.Service.Dtos;
 
-public sealed class ServiceLookupDto
+public sealed class ServiceDto
 {
     public int Id { get; init; }
 
