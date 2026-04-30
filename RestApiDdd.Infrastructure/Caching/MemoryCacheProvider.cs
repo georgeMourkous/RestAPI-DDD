@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
-using RestApiDdd.Service.Abstractions;
+using RestApiDdd.Infrastructure.Abstractions;
 
 namespace RestApiDdd.Infrastructure.Caching;
 

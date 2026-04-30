@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RestApiDdd.Domain.Entities;
+using RestApiDdd.Infrastructure.Abstractions;
 using RestApiDdd.Infrastructure.Data;
 using RestApiDdd.Service.Abstractions;
 

@@ -1,6 +1,6 @@
-namespace RestApiDdd.Service.Abstractions;
+namespace RestApiDdd.Infrastructure.Abstractions;
 
-public interface ICacheProvider
+internal interface ICacheProvider
 {
     Task<TItem?> GetOrCreateAsync<TItem>(
         string key,

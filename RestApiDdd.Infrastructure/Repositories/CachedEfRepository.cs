@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RestApiDdd.Domain.Common;
+using RestApiDdd.Infrastructure.Abstractions;
 using RestApiDdd.Infrastructure.Data;
-using RestApiDdd.Service.Abstractions;
 
 namespace RestApiDdd.Infrastructure.Repositories;
 

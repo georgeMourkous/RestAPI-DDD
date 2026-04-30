@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RestApiDdd.Infrastructure.Abstractions;
 using RestApiDdd.Infrastructure.Data;
 using RestApiDdd.Service.Abstractions;
 using ServiceAggregate = RestApiDdd.Domain.Entities.Service;

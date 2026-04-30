@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RestApiDdd.Infrastructure.Abstractions;
 using RestApiDdd.Infrastructure.Caching;
 using RestApiDdd.Infrastructure.Data;
 using RestApiDdd.Infrastructure.Events;
