@@ -1,0 +1,8 @@
+bin/
+obj/
+.dotnet_home/
+.nuget/
+.appdata/
+.localappdata/
+.vs/
+*.log

@@ -1,0 +1,36 @@
+@RestApiDdd.Api_HostAddress = https://localhost:7082
+@JwtToken = paste-token-here
+
+GET {{RestApiDdd.Api_HostAddress}}/api/packages
+Accept: application/json
+Authorization: Bearer {{JwtToken}}
+
+###
+
+POST {{RestApiDdd.Api_HostAddress}}/api/packages
+Content-Type: application/json
+Authorization: Bearer {{JwtToken}}
+
+{
+  "name": "Starter Package",
+  "packageCategoryId": 1,
+  "description": "Entry-level package.",
+  "start": null,
+  "expire": null,
+  "isQuantityAllowed": true,
+  "frequencies": [
+    {
+      "name": "Monthly",
+      "frequency": 30,
+      "isActive": true
+    }
+  ],
+  "services": [
+    {
+      "serviceId": 1,
+      "defaultInstances": 1,
+      "minimumInstances": 1,
+      "maximumInstances": 5
+    }
+  ]
+}
