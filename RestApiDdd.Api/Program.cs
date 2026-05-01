@@ -1,19 +1,41 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RestApiDdd.Api.Middleware;
 using RestApiDdd.Api.Security;
 using RestApiDdd.Infrastructure;
+using RestApiDdd.Infrastructure.Data;
 using RestApiDdd.Service;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 var jwtOptions = builder.Configuration
     .GetSection(JwtOptions.SectionName)
     .Get<JwtOptions>() ?? new JwtOptions();
 
+// Read connection string from configuration (appsettings.json or environment)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                       ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
+                       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+// Register ApplicationDbContext (scoped by default)
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString, sql =>
+        sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(
+        builder.Environment.ContentRootPath,
+        "App_Data",
+        "DataProtectionKeys")));
 builder.Services.AddServiceLayer();
 builder.Services.AddInfrastructure(builder.Configuration);
 

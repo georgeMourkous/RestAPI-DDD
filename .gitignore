@@ -5,4 +5,5 @@ obj/
 .appdata/
 .localappdata/
 .vs/
+publish/
 *.log
