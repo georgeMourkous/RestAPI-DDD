@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using RestApiDdd.Domain.Common;
-using RestApiDdd.Service.Abstractions;
+using RestApiDdd.Infrastructure.Abstractions;
 
 namespace RestApiDdd.Infrastructure.Events;
 

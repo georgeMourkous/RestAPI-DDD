@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using RestApiDdd.Domain.Common;
-using RestApiDdd.Service.Abstractions;
+using RestApiDdd.Infrastructure.Abstractions;
+using RestApiDdd.Infrastructure.Configuration;
 
 namespace RestApiDdd.Infrastructure.Data;
 
@@ -31,16 +32,30 @@ public sealed class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Ap
 
         var configuration = configBuilder.Build();
 
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-                               ?? configuration["ConnectionStrings:DefaultConnection"];
+        var baseConnectionString = configuration.GetConnectionString("DefaultConnection")
+                                   ?? configuration["ConnectionStrings:DefaultConnection"];
 
-        if (string.IsNullOrWhiteSpace(connectionString))
+        if (string.IsNullOrWhiteSpace(baseConnectionString))
         {
             throw new InvalidOperationException("Connection string 'DefaultConnection' not found. Configure it in appsettings.json or user secrets for development.");
         }
 
+        var databaseOptions = configuration
+            .GetSection(DatabaseResilienceOptions.SectionName)
+            .Get<DatabaseResilienceOptions>() ?? new DatabaseResilienceOptions();
+        var connectionString = SqlServerConnectionStringFactory.Build(baseConnectionString, databaseOptions);
+
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-        optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.UseSqlServer(
+            connectionString,
+            sqlOptions =>
+            {
+                sqlOptions.CommandTimeout(databaseOptions.CommandTimeoutSeconds);
+                sqlOptions.EnableRetryOnFailure(
+                    databaseOptions.MaxRetryCount,
+                    TimeSpan.FromSeconds(databaseOptions.MaxRetryDelaySeconds),
+                    errorNumbersToAdd: null);
+            });
 
         return new ApplicationDbContext(optionsBuilder.Options, new NoOpDomainEventDispatcher());
     }

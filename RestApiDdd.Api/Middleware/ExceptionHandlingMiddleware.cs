@@ -28,6 +28,7 @@ public sealed class ExceptionHandlingMiddleware(
             NotFoundException => (StatusCodes.Status404NotFound, "Resource not found", exception.Message),
             ConflictException => (StatusCodes.Status409Conflict, "Conflict", exception.Message),
             ApplicationValidationException => (StatusCodes.Status400BadRequest, "Validation failed", exception.Message),
+            DatabaseConnectionException => (StatusCodes.Status503ServiceUnavailable, "Database unavailable", exception.Message),
             DomainException => (StatusCodes.Status400BadRequest, "Business rule violation", exception.Message),
             DbUpdateException => (StatusCodes.Status409Conflict, "Database update failed", "The requested change conflicts with persisted data."),
             UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Forbidden", exception.Message),

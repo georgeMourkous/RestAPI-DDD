@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RestApiDdd.Service\RestApiDdd.Service.csproj" />
     <ProjectReference Include="..\RestApiDdd.Infrastructure\RestApiDdd.Infrastructure.csproj" />
+    <ProjectReference Include="..\RestApiDdd.Service\RestApiDdd.Service.csproj" />
   </ItemGroup>
 
 </Project>

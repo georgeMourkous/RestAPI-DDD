@@ -8,7 +8,8 @@ namespace RestApiDdd.Infrastructure.Repositories;
 
 internal sealed class ServiceRepository(
     ApplicationDbContext dbContext,
-    ICacheProvider cacheProvider) : CachedEfRepository<ServiceAggregate>(dbContext, cacheProvider), IServiceRepository
+    ICacheProvider cacheProvider,
+    Resilience.IDatabaseResilienceExecutor resilienceExecutor) : CachedEfRepository<ServiceAggregate>(dbContext, cacheProvider, resilienceExecutor), IServiceRepository
 {
     protected override string CacheKeyPrefix => "services";
 

@@ -7,7 +7,8 @@ namespace RestApiDdd.Infrastructure.Repositories;
 
 internal abstract class CachedEfRepository<TEntity>(
     ApplicationDbContext dbContext,
-    ICacheProvider cacheProvider) : EfRepository<TEntity>(dbContext)
+    ICacheProvider cacheProvider,
+    Resilience.IDatabaseResilienceExecutor resilienceExecutor) : EfRepository<TEntity>(dbContext, resilienceExecutor)
     where TEntity : Entity
 {
     protected virtual TimeSpan CacheDuration => TimeSpan.FromMinutes(30);
@@ -18,20 +19,24 @@ internal abstract class CachedEfRepository<TEntity>(
 
     public override async Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await cacheProvider.GetOrCreateAsync(
-            GetByIdCacheKey(id),
-            token => CachedQuery.FirstOrDefaultAsync(entity => entity.Id == id, token),
-            CacheDuration,
+        return await ResilienceExecutor.ExecuteAsync(
+            token => cacheProvider.GetOrCreateAsync(
+                GetByIdCacheKey(id),
+                innerToken => CachedQuery.FirstOrDefaultAsync(entity => entity.Id == id, innerToken),
+                CacheDuration,
+                token),
             cancellationToken);
     }
 
     public override async Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken cancellationToken = default)
     {
-        return await cacheProvider.GetOrCreateAsync(
-            ListCacheKey,
-            async token => await CachedQuery.ToListAsync(token),
-            CacheDuration,
-            cancellationToken) ?? [];
+        return await ResilienceExecutor.ExecuteAsync(
+            async token => (IReadOnlyList<TEntity>)(await cacheProvider.GetOrCreateAsync(
+                ListCacheKey,
+                async innerToken => await CachedQuery.ToListAsync(innerToken),
+                CacheDuration,
+                token) ?? []),
+            cancellationToken);
     }
 
     public override async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)

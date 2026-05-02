@@ -1,6 +1,6 @@
 using RestApiDdd.Domain.Common;
 
-namespace RestApiDdd.Service.Abstractions;
+namespace RestApiDdd.Infrastructure.Abstractions;
 
 public interface IDomainEventDispatcher
 {

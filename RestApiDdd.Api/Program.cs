@@ -24,10 +24,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
                        ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
                        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// Register ApplicationDbContext (scoped by default)
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString, sql =>
-        sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

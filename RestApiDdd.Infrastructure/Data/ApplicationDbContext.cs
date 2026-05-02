@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RestApiDdd.Domain.Common;
 using RestApiDdd.Domain.Entities;
-using RestApiDdd.Service.Abstractions;
+using RestApiDdd.Infrastructure.Abstractions;
 using ServiceAggregate = RestApiDdd.Domain.Entities.Service;
 
 namespace RestApiDdd.Infrastructure.Data;
