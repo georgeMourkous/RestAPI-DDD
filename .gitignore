@@ -7,3 +7,5 @@ obj/
 .vs/
 publish/
 *.log
+artifacts/
+RestApiDdd.Api/log/

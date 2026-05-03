@@ -1,79 +1,99 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using RestApiDdd.Api.Configuration;
 using RestApiDdd.Api.Middleware;
 using RestApiDdd.Api.Security;
 using RestApiDdd.Infrastructure;
-using RestApiDdd.Infrastructure.Data;
 using RestApiDdd.Service;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Compact;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(new RenderedCompactJsonFormatter())
+    .CreateBootstrapLogger();
 
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
-
-var jwtOptions = builder.Configuration
-    .GetSection(JwtOptions.SectionName)
-    .Get<JwtOptions>() ?? new JwtOptions();
-
-// Read connection string from configuration (appsettings.json or environment)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                       ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
-                       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-
-
-
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(
-        builder.Environment.ContentRootPath,
-        "App_Data",
-        "DataProtectionKeys")));
-builder.Services.AddServiceLayer();
-builder.Services.AddInfrastructure(builder.Configuration);
-
-if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))
+try
 {
-    throw new InvalidOperationException("JWT signing key is required. Configure Jwt:SigningKey.");
-}
+    Log.Information("Starting RestApiDdd.Api host.");
 
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    var builder = WebApplication.CreateBuilder(args);
+    await builder.Configuration.LoadAwsParameterStoreSecretsAsync();
+
+    builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+        loggerConfiguration
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext());
+
+    var jwtOptions = builder.Configuration
+        .GetSection(JwtOptions.SectionName)
+        .Get<JwtOptions>() ?? new JwtOptions();
+
+    builder.Services.AddControllers();
+    builder.Services.AddOpenApi();
+    builder.Services.AddRequestResponseLogging(builder.Configuration);
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(
+            builder.Environment.ContentRootPath,
+            "App_Data",
+            "DataProtectionKeys")));
+    builder.Services.AddServiceLayer();
+    builder.Services.AddInfrastructure(builder.Configuration);
+
+    if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        throw new InvalidOperationException("JWT signing key is required. Configure Jwt:SigningKey.");
+    }
+
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
         {
-            ValidateIssuer = true,
-            ValidIssuer = jwtOptions.Issuer,
-            ValidateAudience = true,
-            ValidAudience = jwtOptions.Audience,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(2)
-        };
-    });
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = jwtOptions.Issuer,
+                ValidateAudience = true,
+                ValidAudience = jwtOptions.Audience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromMinutes(2)
+            };
+        });
 
-builder.Services.AddAuthorization();
+    builder.Services.AddAuthorization();
 
-var app = builder.Build();
+    var app = builder.Build();
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+    app.UseRequestResponseLogging();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
+    app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapOpenApi();
+    }
+
+    app.UseHttpsRedirection();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    app.Run();
 }
-
-app.UseHttpsRedirection();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+catch (Exception exception)
+{
+    Log.Fatal(exception, "RestApiDdd.Api host terminated unexpectedly.");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
