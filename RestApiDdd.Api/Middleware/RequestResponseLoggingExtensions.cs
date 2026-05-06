@@ -2,7 +2,7 @@ namespace RestApiDdd.Api.Middleware;
 
 public static class RequestResponseLoggingExtensions
 {
-    public static IServiceCollection AddRequestResponseLogging(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddRequestResponseLoggingConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<RequestResponseLoggingOptions>(
             configuration.GetSection(RequestResponseLoggingOptions.SectionName));

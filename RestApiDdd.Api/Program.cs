@@ -24,11 +24,7 @@ try
     var builder = WebApplication.CreateBuilder(args);
     await builder.Configuration.LoadAwsParameterStoreSecretsAsync();
 
-    builder.Host.UseSerilog((context, services, loggerConfiguration) =>
-        loggerConfiguration
-            .ReadFrom.Configuration(context.Configuration)
-            .ReadFrom.Services(services)
-            .Enrich.FromLogContext());
+    builder.Host.UseConfiguredSerilog();
 
     var jwtOptions = builder.Configuration
         .GetSection(JwtOptions.SectionName)
@@ -36,7 +32,7 @@ try
 
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
-    builder.Services.AddRequestResponseLogging(builder.Configuration);
+    builder.Services.AddRequestResponseLoggingConfiguration(builder.Configuration);
     builder.Services.AddDataProtection()
         .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(
             builder.Environment.ContentRootPath,
