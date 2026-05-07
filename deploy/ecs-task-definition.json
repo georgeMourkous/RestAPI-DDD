@@ -1,0 +1,46 @@
+{
+  "family": "restapi-ddd-api-TaskDefination",
+  "taskRoleArn": "arn:aws:iam::674978178617:role/RestApiDddEcsTaskRole",
+  "executionRoleArn": "arn:aws:iam::674978178617:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "1024",
+  "memory": "2048",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "restapi-ddd-api",
+      "image": "674978178617.dkr.ecr.us-east-1.amazonaws.com/restapi-ddd-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "name": "restapi-ddd-api-8080-tcp",
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "environment": [
+        {
+          "name": "ASPNETCORE_ENVIRONMENT",
+          "value": "Production"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/restapi-ddd-api-TaskDefination",
+          "awslogs-create-group": "true",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

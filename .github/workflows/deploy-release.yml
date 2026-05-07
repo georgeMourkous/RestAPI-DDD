@@ -1,0 +1,167 @@
+name: Deploy RestApiDdd API
+
+on:
+  push:
+    branches:
+      - release
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: "674978178617"
+  ECR_REPOSITORY: restapi-ddd-api
+  ECS_CLUSTER: restapi-ddd-cluster
+  ECS_SERVICE: restapi-ddd-api-TaskDefination-service-pyexz2gr
+  ECS_TASK_DEFINITION: deploy/ecs-task-definition.json
+  ECS_CONTAINER_NAME: restapi-ddd-api
+  RDS_SECURITY_GROUP_ID: sg-068f9bf1d38f48b32
+  DB_CONNECTION_PARAMETER: /RestApiDdd/Production/ConnectionStrings/DefaultConnection
+
+jobs:
+  deploy:
+    name: Build, migrate, and deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::674978178617:role/RestApiDddGitHubActionsDeployRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore local .NET tools
+        run: dotnet tool restore
+
+      - name: Restore dependencies
+        run: dotnet restore RestApiDdd.slnx
+
+      - name: Build
+        run: dotnet build RestApiDdd.slnx --configuration Release --no-restore
+
+      - name: Generate idempotent EF migration script
+        env:
+          ASPNETCORE_ENVIRONMENT: Production
+        run: |
+          mkdir -p artifacts
+          dotnet tool run dotnet-ef migrations script --idempotent \
+            --project RestApiDdd.Infrastructure/RestApiDdd.Infrastructure.csproj \
+            --startup-project RestApiDdd.Infrastructure/RestApiDdd.Infrastructure.csproj \
+            --context ApplicationDbContext \
+            --output artifacts/deploy-rds.sql
+
+      - name: Upload migration script artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-rds-sql
+          path: artifacts/deploy-rds.sql
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker build -t "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
+          echo "image=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+
+      - name: Allow GitHub runner to reach RDS temporarily
+        id: rds-access
+        run: |
+          RUNNER_IP="$(curl -s https://checkip.amazonaws.com)"
+          RUNNER_CIDR="$RUNNER_IP/32"
+          echo "runner-cidr=$RUNNER_CIDR" >> "$GITHUB_OUTPUT"
+          aws ec2 authorize-security-group-ingress \
+            --group-id "$RDS_SECURITY_GROUP_ID" \
+            --protocol tcp \
+            --port 1433 \
+            --cidr "$RUNNER_CIDR" || true
+
+      - name: Read database connection string
+        id: db-connection
+        shell: pwsh
+        run: |
+          $connectionString = aws ssm get-parameter `
+            --name "${{ env.DB_CONNECTION_PARAMETER }}" `
+            --with-decryption `
+            --query "Parameter.Value" `
+            --output text
+
+          $parts = @{}
+          foreach ($segment in $connectionString -split ';') {
+            if ($segment -match '^\s*([^=]+)=(.*)$') {
+              $parts[$matches[1].Trim().ToLowerInvariant()] = $matches[2].Trim()
+            }
+          }
+
+          $server = $parts['server'] -replace '^tcp:', ''
+          $database = $parts['database']
+          $user = $parts['user id']
+          $password = $parts['password']
+
+          if ([string]::IsNullOrWhiteSpace($server) -or [string]::IsNullOrWhiteSpace($database) -or [string]::IsNullOrWhiteSpace($user) -or [string]::IsNullOrWhiteSpace($password)) {
+            throw "Connection string must include Server, Database, User Id, and Password."
+          }
+
+          "db-server=$server" >> $env:GITHUB_OUTPUT
+          "db-name=$database" >> $env:GITHUB_OUTPUT
+          "db-user=$user" >> $env:GITHUB_OUTPUT
+          "::add-mask::$password"
+          "SQLCMDPASSWORD=$password" >> $env:GITHUB_ENV
+
+      - name: Apply idempotent EF SQL script with sqlcmd
+        run: |
+          docker run --rm \
+            -e SQLCMDPASSWORD \
+            -v "$GITHUB_WORKSPACE/artifacts:/scripts" \
+            mcr.microsoft.com/mssql-tools \
+            /opt/mssql-tools/bin/sqlcmd \
+              -S "${{ steps.db-connection.outputs.db-server }}" \
+              -d "${{ steps.db-connection.outputs.db-name }}" \
+              -U "${{ steps.db-connection.outputs.db-user }}" \
+              -i /scripts/deploy-rds.sql \
+              -b \
+              -C
+
+      - name: Revoke GitHub runner RDS access
+        if: always() && steps.rds-access.outputs.runner-cidr != ''
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id "$RDS_SECURITY_GROUP_ID" \
+            --protocol tcp \
+            --port 1433 \
+            --cidr "${{ steps.rds-access.outputs.runner-cidr }}" || true
+
+      - name: Render ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}
+          container-name: ${{ env.ECS_CONTAINER_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          wait-max-delay-seconds: 15
