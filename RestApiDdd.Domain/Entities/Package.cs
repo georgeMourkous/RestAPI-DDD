@@ -116,29 +116,41 @@ public sealed class Package : AggregateRoot
         var requested = frequencies.ToList();
         EnsureUniqueFrequencyNames(requested);
 
-        var requestedIds = requested.Where(frequency => frequency.Id > 0).Select(frequency => frequency.Id).ToHashSet();
-        _frequencies.RemoveAll(frequency => frequency.Id > 0 && !requestedIds.Contains(frequency.Id));
+        var retainedFrequencies = new HashSet<PackageFrequency>();
 
         foreach (var requestedFrequency in requested)
         {
+            PackageFrequency? existing;
             if (requestedFrequency.Id > 0)
             {
-                var existing = _frequencies.FirstOrDefault(frequency => frequency.Id == requestedFrequency.Id);
+                existing = _frequencies.FirstOrDefault(frequency => frequency.Id == requestedFrequency.Id);
                 if (existing is null)
                 {
                     throw new DomainException($"Package frequency {requestedFrequency.Id} does not belong to this package.");
                 }
+            }
+            else
+            {
+                existing = _frequencies.FirstOrDefault(frequency =>
+                    FrequencyNamesEqual(frequency.Name, requestedFrequency.Name));
 
-                existing.Update(requestedFrequency.Name, requestedFrequency.Frequency, requestedFrequency.IsActive);
-                continue;
+                if (existing is null)
+                {
+                    existing = PackageFrequency.Create(
+                        requestedFrequency.Name,
+                        requestedFrequency.Frequency,
+                        requestedFrequency.IsActive,
+                        utcNow);
+
+                    _frequencies.Add(existing);
+                }
             }
 
-            _frequencies.Add(PackageFrequency.Create(
-                requestedFrequency.Name,
-                requestedFrequency.Frequency,
-                requestedFrequency.IsActive,
-                utcNow));
+            existing.Update(requestedFrequency.Name, requestedFrequency.Frequency, requestedFrequency.IsActive);
+            retainedFrequencies.Add(existing);
         }
+
+        _frequencies.RemoveAll(frequency => !retainedFrequencies.Contains(frequency));
     }
 
     private void ReplaceServices(IEnumerable<PackageServiceDefinition> services)
@@ -146,33 +158,44 @@ public sealed class Package : AggregateRoot
         var requested = services.ToList();
         EnsureUniqueServices(requested);
 
-        var requestedIds = requested.Where(service => service.Id > 0).Select(service => service.Id).ToHashSet();
-        _services.RemoveAll(service => service.Id > 0 && !requestedIds.Contains(service.Id));
+        var retainedServices = new HashSet<PackageService>();
 
         foreach (var requestedService in requested)
         {
+            PackageService? existing;
             if (requestedService.Id > 0)
             {
-                var existing = _services.FirstOrDefault(service => service.Id == requestedService.Id);
+                existing = _services.FirstOrDefault(service => service.Id == requestedService.Id);
                 if (existing is null)
                 {
                     throw new DomainException($"Package service {requestedService.Id} does not belong to this package.");
                 }
+            }
+            else
+            {
+                existing = _services.FirstOrDefault(service => service.ServiceId == requestedService.ServiceId);
 
-                existing.Update(
-                    requestedService.ServiceId,
-                    requestedService.DefaultInstances,
-                    requestedService.MinimumInstances,
-                    requestedService.MaximumInstances);
-                continue;
+                if (existing is null)
+                {
+                    existing = PackageService.Create(
+                        requestedService.ServiceId,
+                        requestedService.DefaultInstances,
+                        requestedService.MinimumInstances,
+                        requestedService.MaximumInstances);
+
+                    _services.Add(existing);
+                }
             }
 
-            _services.Add(PackageService.Create(
+            existing.Update(
                 requestedService.ServiceId,
                 requestedService.DefaultInstances,
                 requestedService.MinimumInstances,
-                requestedService.MaximumInstances));
+                requestedService.MaximumInstances);
+            retainedServices.Add(existing);
         }
+
+        _services.RemoveAll(service => !retainedServices.Contains(service));
     }
 
     private void RaiseActivationChangedIfNeeded(bool wasActive, DateTime utcNow)
@@ -189,7 +212,7 @@ public sealed class Package : AggregateRoot
     private static void EnsureUniqueFrequencyNames(IEnumerable<PackageFrequencyDefinition> frequencies)
     {
         var duplicatedName = frequencies
-            .GroupBy(frequency => frequency.Name?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(frequency => NormalizeFrequencyName(frequency.Name), StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault(group => group.Count() > 1)
             ?.Key;
 
@@ -210,5 +233,18 @@ public sealed class Package : AggregateRoot
         {
             throw new DomainException($"Service {duplicatedServiceId.Value} is duplicated in this package.");
         }
+    }
+
+    private static bool FrequencyNamesEqual(string name, string requestedName)
+    {
+        return string.Equals(
+            NormalizeFrequencyName(name),
+            NormalizeFrequencyName(requestedName),
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeFrequencyName(string? name)
+    {
+        return name?.Trim() ?? string.Empty;
     }
 }
