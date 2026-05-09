@@ -1,13 +1,19 @@
 @RestApiDdd.Api_HostAddress = https://localhost:7082
 @JwtToken = paste-token-here
 
-GET {{RestApiDdd.Api_HostAddress}}/api/packages
+GET {{RestApiDdd.Api_HostAddress}}/api/packages/v1
 Accept: application/json
 Authorization: Bearer {{JwtToken}}
 
 ###
 
-POST {{RestApiDdd.Api_HostAddress}}/api/packages
+GET {{RestApiDdd.Api_HostAddress}}/api/packages/v1/1
+Accept: application/json
+Authorization: Bearer {{JwtToken}}
+
+###
+
+POST {{RestApiDdd.Api_HostAddress}}/api/packages/v1
 Content-Type: application/json
 Authorization: Bearer {{JwtToken}}
 

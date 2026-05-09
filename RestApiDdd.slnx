@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="RestApiDdd.Api.Tests/RestApiDdd.Api.Tests.csproj" />
   <Project Path="RestApiDdd.Api/RestApiDdd.Api.csproj" />
   <Project Path="RestApiDdd.Domain.Tests/RestApiDdd.Domain.Tests.csproj" />
   <Project Path="RestApiDdd.Domain/RestApiDdd.Domain.csproj" />
