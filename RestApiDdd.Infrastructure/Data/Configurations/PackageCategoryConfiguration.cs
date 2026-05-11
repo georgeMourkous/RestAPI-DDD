@@ -25,12 +25,48 @@ internal sealed class PackageCategoryConfiguration : IEntityTypeConfiguration<Pa
         builder.Property(category => category.Visible)
             .IsRequired();
 
-        builder.HasData(new
-        {
-            Id = 1,
-            Name = "Default",
-            SortOrder = 1,
-            Visible = true
-        });
+        builder.HasData(
+            new
+            {
+                Id = (int)PackageCategoryType.SharePlan,
+                Name = "Share Plan",
+                SortOrder = 1,
+                Visible = false
+            },
+            new
+            {
+                Id = (int)PackageCategoryType.Default,
+                Name = "Default",
+                SortOrder = 2,
+                Visible = true
+            },
+            new
+            {
+                Id = (int)PackageCategoryType.BillingActivation,
+                Name = "Billing Activation",
+                SortOrder = 3,
+                Visible = true
+            },
+            new
+            {
+                Id = (int)PackageCategoryType.SharePlanAddOn,
+                Name = "Share Plan Add-on",
+                SortOrder = 4,
+                Visible = true
+            },
+            new
+            {
+                Id = (int)PackageCategoryType.OneTimeBilling,
+                Name = "One Time Billing",
+                SortOrder = 5,
+                Visible = true
+            },
+            new
+            {
+                Id = (int)PackageCategoryType.GlobalAddOn,
+                Name = "Global Add-on",
+                SortOrder = 6,
+                Visible = false
+            });
     }
 }

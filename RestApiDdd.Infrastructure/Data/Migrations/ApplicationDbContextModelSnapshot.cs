@@ -42,6 +42,11 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("Expire")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("FullPeriod")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("IsQuantityAllowed")
                         .HasColumnType("bit");
 
@@ -52,6 +57,11 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
 
                     b.Property<int>("PackageCategoryId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("PostPaid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("Start")
                         .HasColumnType("datetime2");
@@ -96,9 +106,44 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Default",
+                            Name = "Share Plan",
                             SortOrder = 1,
+                            Visible = false
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Default",
+                            SortOrder = 2,
                             Visible = true
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Billing Activation",
+                            SortOrder = 3,
+                            Visible = true
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Share Plan Add-on",
+                            SortOrder = 4,
+                            Visible = true
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "One Time Billing",
+                            SortOrder = 5,
+                            Visible = true
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Global Add-on",
+                            SortOrder = 6,
+                            Visible = false
                         });
                 });
 
@@ -168,6 +213,61 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("PackageService", (string)null);
+                });
+
+            modelBuilder.Entity("RestApiDdd.Domain.Entities.ServiceStatusType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TokenName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("TokenName")
+                        .IsUnique();
+
+                    b.ToTable("ServiceStatusType", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Recurring Charge",
+                            SortOrder = 1,
+                            TokenName = "mrc"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Non-recurring Charge",
+                            SortOrder = 2,
+                            TokenName = "nrc"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Fee",
+                            SortOrder = 3,
+                            TokenName = "fee"
+                        });
                 });
 
             modelBuilder.Entity("RestApiDdd.Domain.Entities.Service", b =>

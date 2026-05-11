@@ -12,6 +12,8 @@ public sealed class ApplicationDbContext(
 {
     public DbSet<ServiceAggregate> Services => Set<ServiceAggregate>();
 
+    public DbSet<ServiceStatusType> ServiceStatusTypes => Set<ServiceStatusType>();
+
     public DbSet<PackageCategory> PackageCategories => Set<PackageCategory>();
 
     public DbSet<Package> Packages => Set<Package>();

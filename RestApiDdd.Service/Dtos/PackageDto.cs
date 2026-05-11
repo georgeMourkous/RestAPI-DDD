@@ -1,3 +1,5 @@
+using RestApiDdd.Service.Versioning;
+
 namespace RestApiDdd.Service.Dtos;
 
 public sealed class PackageDto
@@ -17,6 +19,12 @@ public sealed class PackageDto
     public DateTime? Expire { get; init; }
 
     public bool IsQuantityAllowed { get; init; }
+
+    [ApiSupported(ApiVersion.v2)]
+    public bool FullPeriod { get; init; }
+
+    [ApiSupported(ApiVersion.v2)]
+    public bool PostPaid { get; init; }
 
     public bool IsActive { get; init; }
 

@@ -17,6 +17,8 @@ internal static class PackageMapper
             Start = package.Start,
             Expire = package.Expire,
             IsQuantityAllowed = package.IsQuantityAllowed,
+            FullPeriod = package.FullPeriod,
+            PostPaid = package.PostPaid,
             IsActive = package.IsActiveAt(utcNow),
             Frequencies = package.Frequencies
                 .OrderBy(frequency => frequency.Id)

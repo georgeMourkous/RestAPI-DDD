@@ -35,13 +35,9 @@ public sealed class ExceptionHandlingMiddleware(
             _ => (StatusCodes.Status500InternalServerError, "Server error", "An unexpected error occurred.")
         };
 
-        if (statusCode == StatusCodes.Status500InternalServerError)
+        if (ShouldLogError(exception))
         {
-            logger.LogError(exception, "Unhandled exception.");
-        }
-        else
-        {
-            logger.LogWarning(exception, "Request failed with handled exception.");
+            logger.LogError(exception, "Request failed with unexpected exception.");
         }
 
         var problemDetails = new ProblemDetails
@@ -62,5 +58,13 @@ public sealed class ExceptionHandlingMiddleware(
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/problem+json";
         await context.Response.WriteAsJsonAsync(problemDetails);
+    }
+
+    private static bool ShouldLogError(Exception exception)
+    {
+        return exception is not NotFoundException
+            and not ConflictException
+            and not ApplicationValidationException
+            and not DomainException;
     }
 }

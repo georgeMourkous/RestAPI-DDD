@@ -19,15 +19,19 @@ public sealed class Package : AggregateRoot
         DateTime created,
         DateTime? start,
         DateTime? expire,
-        bool isQuantityAllowed)
+        bool isQuantityAllowed,
+        bool fullPeriod,
+        bool postPaid)
     {
         Created = created;
-        UpdateCore(name, packageCategoryId, description, start, expire, isQuantityAllowed);
+        UpdateCore(name, packageCategoryId, description, start, expire, isQuantityAllowed, fullPeriod, postPaid);
     }
 
     public string Name { get; private set; } = string.Empty;
 
     public int PackageCategoryId { get; private set; }
+
+    public PackageCategoryType PackageCategoryType => (PackageCategoryType)PackageCategoryId;
 
     public PackageCategory? PackageCategory { get; private set; }
 
@@ -40,6 +44,10 @@ public sealed class Package : AggregateRoot
     public DateTime? Expire { get; private set; }
 
     public bool IsQuantityAllowed { get; private set; }
+
+    public bool FullPeriod { get; private set; }
+
+    public bool PostPaid { get; private set; }
 
     public IReadOnlyCollection<PackageFrequency> Frequencies => _frequencies.AsReadOnly();
 
@@ -54,9 +62,11 @@ public sealed class Package : AggregateRoot
         bool isQuantityAllowed,
         IEnumerable<PackageFrequencyDefinition> frequencies,
         IEnumerable<PackageServiceDefinition> services,
-        DateTime utcNow)
+        DateTime utcNow,
+        bool fullPeriod = false,
+        bool postPaid = false)
     {
-        var package = new Package(name, packageCategoryId, description, utcNow, start, expire, isQuantityAllowed);
+        var package = new Package(name, packageCategoryId, description, utcNow, start, expire, isQuantityAllowed, fullPeriod, postPaid);
         package.ReplaceFrequencies(frequencies, utcNow);
         package.ReplaceServices(services);
 
@@ -72,11 +82,13 @@ public sealed class Package : AggregateRoot
         bool isQuantityAllowed,
         IEnumerable<PackageFrequencyDefinition> frequencies,
         IEnumerable<PackageServiceDefinition> services,
-        DateTime utcNow)
+        DateTime utcNow,
+        bool fullPeriod = false,
+        bool postPaid = false)
     {
         var wasActive = IsActiveAt(utcNow);
 
-        UpdateCore(name, packageCategoryId, description, start, expire, isQuantityAllowed);
+        UpdateCore(name, packageCategoryId, description, start, expire, isQuantityAllowed, fullPeriod, postPaid);
         ReplaceFrequencies(frequencies, utcNow);
         ReplaceServices(services);
 
@@ -95,10 +107,17 @@ public sealed class Package : AggregateRoot
         string? description,
         DateTime? start,
         DateTime? expire,
-        bool isQuantityAllowed)
+        bool isQuantityAllowed,
+        bool fullPeriod,
+        bool postPaid)
     {
         Name = Guard.RequiredMaxLength(name, nameof(Name), 255);
         PackageCategoryId = Guard.PositiveId(packageCategoryId, nameof(PackageCategoryId));
+        if (!Enum.IsDefined((PackageCategoryType)PackageCategoryId))
+        {
+            throw new DomainException($"Package category {PackageCategoryId} is not supported.");
+        }
+
         Description = Guard.OptionalMaxLength(description, nameof(Description), 2000);
 
         if (start.HasValue && expire.HasValue && start.Value > expire.Value)
@@ -109,6 +128,8 @@ public sealed class Package : AggregateRoot
         Start = start;
         Expire = expire;
         IsQuantityAllowed = isQuantityAllowed;
+        FullPeriod = fullPeriod;
+        PostPaid = postPaid;
     }
 
     private void ReplaceFrequencies(IEnumerable<PackageFrequencyDefinition> frequencies, DateTime utcNow)
@@ -116,29 +137,41 @@ public sealed class Package : AggregateRoot
         var requested = frequencies.ToList();
         EnsureUniqueFrequencyNames(requested);
 
-        var requestedIds = requested.Where(frequency => frequency.Id > 0).Select(frequency => frequency.Id).ToHashSet();
-        _frequencies.RemoveAll(frequency => frequency.Id > 0 && !requestedIds.Contains(frequency.Id));
+        var retainedFrequencies = new HashSet<PackageFrequency>();
 
         foreach (var requestedFrequency in requested)
         {
+            PackageFrequency? existing;
             if (requestedFrequency.Id > 0)
             {
-                var existing = _frequencies.FirstOrDefault(frequency => frequency.Id == requestedFrequency.Id);
+                existing = _frequencies.FirstOrDefault(frequency => frequency.Id == requestedFrequency.Id);
                 if (existing is null)
                 {
                     throw new DomainException($"Package frequency {requestedFrequency.Id} does not belong to this package.");
                 }
+            }
+            else
+            {
+                existing = _frequencies.FirstOrDefault(frequency =>
+                    FrequencyNamesEqual(frequency.Name, requestedFrequency.Name));
 
-                existing.Update(requestedFrequency.Name, requestedFrequency.Frequency, requestedFrequency.IsActive);
-                continue;
+                if (existing is null)
+                {
+                    existing = PackageFrequency.Create(
+                        requestedFrequency.Name,
+                        requestedFrequency.Frequency,
+                        requestedFrequency.IsActive,
+                        utcNow);
+
+                    _frequencies.Add(existing);
+                }
             }
 
-            _frequencies.Add(PackageFrequency.Create(
-                requestedFrequency.Name,
-                requestedFrequency.Frequency,
-                requestedFrequency.IsActive,
-                utcNow));
+            existing.Update(requestedFrequency.Name, requestedFrequency.Frequency, requestedFrequency.IsActive);
+            retainedFrequencies.Add(existing);
         }
+
+        _frequencies.RemoveAll(frequency => !retainedFrequencies.Contains(frequency));
     }
 
     private void ReplaceServices(IEnumerable<PackageServiceDefinition> services)
@@ -146,33 +179,44 @@ public sealed class Package : AggregateRoot
         var requested = services.ToList();
         EnsureUniqueServices(requested);
 
-        var requestedIds = requested.Where(service => service.Id > 0).Select(service => service.Id).ToHashSet();
-        _services.RemoveAll(service => service.Id > 0 && !requestedIds.Contains(service.Id));
+        var retainedServices = new HashSet<PackageService>();
 
         foreach (var requestedService in requested)
         {
+            PackageService? existing;
             if (requestedService.Id > 0)
             {
-                var existing = _services.FirstOrDefault(service => service.Id == requestedService.Id);
+                existing = _services.FirstOrDefault(service => service.Id == requestedService.Id);
                 if (existing is null)
                 {
                     throw new DomainException($"Package service {requestedService.Id} does not belong to this package.");
                 }
+            }
+            else
+            {
+                existing = _services.FirstOrDefault(service => service.ServiceId == requestedService.ServiceId);
 
-                existing.Update(
-                    requestedService.ServiceId,
-                    requestedService.DefaultInstances,
-                    requestedService.MinimumInstances,
-                    requestedService.MaximumInstances);
-                continue;
+                if (existing is null)
+                {
+                    existing = PackageService.Create(
+                        requestedService.ServiceId,
+                        requestedService.DefaultInstances,
+                        requestedService.MinimumInstances,
+                        requestedService.MaximumInstances);
+
+                    _services.Add(existing);
+                }
             }
 
-            _services.Add(PackageService.Create(
+            existing.Update(
                 requestedService.ServiceId,
                 requestedService.DefaultInstances,
                 requestedService.MinimumInstances,
-                requestedService.MaximumInstances));
+                requestedService.MaximumInstances);
+            retainedServices.Add(existing);
         }
+
+        _services.RemoveAll(service => !retainedServices.Contains(service));
     }
 
     private void RaiseActivationChangedIfNeeded(bool wasActive, DateTime utcNow)
@@ -189,7 +233,7 @@ public sealed class Package : AggregateRoot
     private static void EnsureUniqueFrequencyNames(IEnumerable<PackageFrequencyDefinition> frequencies)
     {
         var duplicatedName = frequencies
-            .GroupBy(frequency => frequency.Name?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(frequency => NormalizeFrequencyName(frequency.Name), StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault(group => group.Count() > 1)
             ?.Key;
 
@@ -210,5 +254,18 @@ public sealed class Package : AggregateRoot
         {
             throw new DomainException($"Service {duplicatedServiceId.Value} is duplicated in this package.");
         }
+    }
+
+    private static bool FrequencyNamesEqual(string name, string requestedName)
+    {
+        return string.Equals(
+            NormalizeFrequencyName(name),
+            NormalizeFrequencyName(requestedName),
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeFrequencyName(string? name)
+    {
+        return name?.Trim() ?? string.Empty;
     }
 }

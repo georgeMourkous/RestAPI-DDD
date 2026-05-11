@@ -80,32 +80,4 @@ internal sealed class PackageRepository : EfRepository<Package>, IPackageReposit
                 token) ?? []),
             cancellationToken);
     }
-
-    public async Task<bool> CategoryExistsAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await GetCategoryByIdAsync(id, cancellationToken) is not null;
-    }
-
-    public async Task AddCategoryAsync(PackageCategory category, CancellationToken cancellationToken = default)
-    {
-        await _dbContext.PackageCategories.AddAsync(category, cancellationToken);
-        InvalidatePackageCategoryCache();
-    }
-
-    public void UpdateCategory(PackageCategory category)
-    {
-        _dbContext.PackageCategories.Update(category);
-        InvalidatePackageCategoryCache();
-    }
-
-    public void RemoveCategory(PackageCategory category)
-    {
-        _dbContext.PackageCategories.Remove(category);
-        InvalidatePackageCategoryCache();
-    }
-
-    private void InvalidatePackageCategoryCache()
-    {
-        _cacheProvider.Remove(PackageCategoriesCacheKey);
-    }
 }

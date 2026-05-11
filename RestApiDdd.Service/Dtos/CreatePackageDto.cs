@@ -1,3 +1,5 @@
+using RestApiDdd.Service.Versioning;
+
 namespace RestApiDdd.Service.Dtos;
 
 public sealed class CreatePackageDto
@@ -13,6 +15,12 @@ public sealed class CreatePackageDto
     public DateTime? Expire { get; init; }
 
     public bool IsQuantityAllowed { get; init; }
+
+    [ApiSupported(ApiVersion.v2)]
+    public bool? FullPeriod { get; init; }
+
+    [ApiSupported(ApiVersion.v2)]
+    public bool? PostPaid { get; init; }
 
     public List<PackageFrequencyDto> Frequencies { get; init; } = [];
 

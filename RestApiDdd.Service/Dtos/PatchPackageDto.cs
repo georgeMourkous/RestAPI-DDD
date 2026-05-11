@@ -1,3 +1,5 @@
+using RestApiDdd.Service.Versioning;
+
 namespace RestApiDdd.Service.Dtos;
 
 public sealed class PatchPackageDto
@@ -19,6 +21,12 @@ public sealed class PatchPackageDto
     public bool ClearExpire { get; init; }
 
     public bool? IsQuantityAllowed { get; init; }
+
+    [ApiSupported(ApiVersion.v2)]
+    public bool? FullPeriod { get; init; }
+
+    [ApiSupported(ApiVersion.v2)]
+    public bool? PostPaid { get; init; }
 
     public List<PackageFrequencyDto>? Frequencies { get; init; }
 

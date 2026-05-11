@@ -34,7 +34,9 @@ internal sealed class CreatePackageCommandHandler(
             command.Package.IsQuantityAllowed,
             command.Package.Frequencies.ToFrequencyDefinitions(),
             command.Package.Services.ToServiceDefinitions(),
-            clock.UtcNow);
+            clock.UtcNow,
+            command.Package.FullPeriod ?? false,
+            command.Package.PostPaid ?? false);
 
         await packageRepository.AddAsync(package, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
