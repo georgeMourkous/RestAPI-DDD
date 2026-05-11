@@ -215,6 +215,61 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
                     b.ToTable("PackageService", (string)null);
                 });
 
+            modelBuilder.Entity("RestApiDdd.Domain.Entities.ServiceStatusType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TokenName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("TokenName")
+                        .IsUnique();
+
+                    b.ToTable("ServiceStatusType", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Recurring Charge",
+                            SortOrder = 1,
+                            TokenName = "mrc"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Non-recurring Charge",
+                            SortOrder = 2,
+                            TokenName = "nrc"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Fee",
+                            SortOrder = 3,
+                            TokenName = "fee"
+                        });
+                });
+
             modelBuilder.Entity("RestApiDdd.Domain.Entities.Service", b =>
                 {
                     b.Property<int>("Id")

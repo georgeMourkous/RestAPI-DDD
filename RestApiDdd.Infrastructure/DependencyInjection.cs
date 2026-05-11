@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         services.AddScoped<IPackageRepository, PackageRepository>();
         services.AddScoped<IServiceRepository, ServiceRepository>();
+        services.AddScoped<IServiceStatusTypeRepository, ServiceStatusTypeRepository>();
 
         return services;
     }
