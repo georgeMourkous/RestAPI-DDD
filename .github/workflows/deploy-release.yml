@@ -137,6 +137,7 @@ jobs:
               -d "${{ steps.db-connection.outputs.db-name }}" \
               -U "${{ steps.db-connection.outputs.db-user }}" \
               -i /scripts/deploy-rds.sql \
+              -I \
               -b \
               -C
 
