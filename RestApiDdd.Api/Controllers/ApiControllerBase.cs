@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using RestApiDdd.Api.Versioning;
+using RestApiDdd.Service.Versioning;
 
 namespace RestApiDdd.Api.Controllers;
 

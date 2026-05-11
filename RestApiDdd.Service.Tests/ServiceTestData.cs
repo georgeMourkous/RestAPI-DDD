@@ -17,6 +17,8 @@ internal static class ServiceTestData
         DateTime? start = null,
         DateTime? expire = null,
         bool isQuantityAllowed = true,
+        bool fullPeriod = false,
+        bool postPaid = false,
         List<PackageFrequencyDto>? frequencies = null,
         List<PackageServiceDto>? services = null)
     {
@@ -28,6 +30,8 @@ internal static class ServiceTestData
             Start = start,
             Expire = expire,
             IsQuantityAllowed = isQuantityAllowed,
+            FullPeriod = fullPeriod,
+            PostPaid = postPaid,
             Frequencies = frequencies ?? [FrequencyDto()],
             Services = services ?? [ServiceDto()]
         };
@@ -40,6 +44,8 @@ internal static class ServiceTestData
         DateTime? start = null,
         DateTime? expire = null,
         bool isQuantityAllowed = true,
+        bool fullPeriod = false,
+        bool postPaid = false,
         List<PackageFrequencyDto>? frequencies = null,
         List<PackageServiceDto>? services = null)
     {
@@ -51,6 +57,8 @@ internal static class ServiceTestData
             Start = start,
             Expire = expire,
             IsQuantityAllowed = isQuantityAllowed,
+            FullPeriod = fullPeriod,
+            PostPaid = postPaid,
             Frequencies = frequencies ?? [FrequencyDto()],
             Services = services ?? [ServiceDto()]
         };
@@ -98,6 +106,8 @@ internal static class ServiceTestData
         DateTime? start = null,
         DateTime? expire = null,
         bool isQuantityAllowed = true,
+        bool fullPeriod = false,
+        bool postPaid = false,
         DateTime? utcNow = null,
         IEnumerable<PackageFrequencyDefinition>? frequencies = null,
         IEnumerable<PackageServiceDefinition>? services = null)
@@ -111,7 +121,9 @@ internal static class ServiceTestData
             isQuantityAllowed,
             frequencies ?? [new PackageFrequencyDefinition(0, "Monthly", 30, true)],
             services ?? [new PackageServiceDefinition(0, 101, 1, 0, 3)],
-            utcNow ?? UtcNow);
+            utcNow ?? UtcNow,
+            fullPeriod,
+            postPaid);
 
         SetEntityId(package, id);
         return package;

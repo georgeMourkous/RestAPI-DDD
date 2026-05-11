@@ -15,7 +15,7 @@ public sealed class PackageTests
 
         var package = Package.Create(
             "  Premium  ",
-            packageCategoryId: 7,
+            packageCategoryId: (int)PackageCategoryType.GlobalAddOn,
             description: "  Includes extras  ",
             start,
             expire,
@@ -28,15 +28,20 @@ public sealed class PackageTests
                 DomainTestData.ServiceDefinition(serviceId: 101, defaultInstances: 2, minimumInstances: 1, maximumInstances: 5),
                 DomainTestData.ServiceDefinition(serviceId: 102, defaultInstances: 1, minimumInstances: 0, maximumInstances: null)
             ],
-            now);
+            now,
+            fullPeriod: true,
+            postPaid: true);
 
         Assert.Equal("Premium", package.Name);
-        Assert.Equal(7, package.PackageCategoryId);
+        Assert.Equal(6, package.PackageCategoryId);
+        Assert.Equal(PackageCategoryType.GlobalAddOn, package.PackageCategoryType);
         Assert.Equal("Includes extras", package.Description);
         Assert.Equal(now, package.Created);
         Assert.Equal(start, package.Start);
         Assert.Equal(expire, package.Expire);
         Assert.True(package.IsQuantityAllowed);
+        Assert.True(package.FullPeriod);
+        Assert.True(package.PostPaid);
         Assert.Empty(package.DomainEvents);
 
         Assert.Collection(
@@ -131,12 +136,16 @@ public sealed class PackageTests
                 DomainTestData.ServiceDefinition(id: 20, serviceId: 103, defaultInstances: 2, minimumInstances: 1, maximumInstances: 5),
                 DomainTestData.ServiceDefinition(serviceId: 104, defaultInstances: 1, minimumInstances: 0, maximumInstances: null)
             ],
-            updatedAt);
+            updatedAt,
+            fullPeriod: true,
+            postPaid: true);
 
         Assert.Equal("Professional", package.Name);
         Assert.Equal(2, package.PackageCategoryId);
         Assert.Equal("Updated description", package.Description);
         Assert.True(package.IsQuantityAllowed);
+        Assert.True(package.FullPeriod);
+        Assert.True(package.PostPaid);
         Assert.Empty(package.DomainEvents);
 
         Assert.Equal(2, package.Frequencies.Count);
@@ -372,6 +381,24 @@ public sealed class PackageTests
                 DomainTestData.UtcNow));
 
         Assert.Equal("PackageCategoryId must be greater than zero.", exception.Message);
+    }
+
+    [Fact]
+    public void Create_Throws_WhenPackageCategoryIdIsNotDefined()
+    {
+        var exception = Assert.Throws<DomainException>(() =>
+            Package.Create(
+                "Starter",
+                packageCategoryId: 99,
+                description: null,
+                start: null,
+                expire: null,
+                isQuantityAllowed: true,
+                [DomainTestData.FrequencyDefinition()],
+                [DomainTestData.ServiceDefinition()],
+                DomainTestData.UtcNow));
+
+        Assert.Equal("Package category 99 is not supported.", exception.Message);
     }
 
     [Fact]

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using RestApiDdd.Api.Controllers;
 using RestApiDdd.Api.Versioning;
+using RestApiDdd.Service.Versioning;
 
 namespace RestApiDdd.Api.Tests.Versioning;
 

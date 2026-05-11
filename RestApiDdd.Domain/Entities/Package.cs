@@ -19,15 +19,19 @@ public sealed class Package : AggregateRoot
         DateTime created,
         DateTime? start,
         DateTime? expire,
-        bool isQuantityAllowed)
+        bool isQuantityAllowed,
+        bool fullPeriod,
+        bool postPaid)
     {
         Created = created;
-        UpdateCore(name, packageCategoryId, description, start, expire, isQuantityAllowed);
+        UpdateCore(name, packageCategoryId, description, start, expire, isQuantityAllowed, fullPeriod, postPaid);
     }
 
     public string Name { get; private set; } = string.Empty;
 
     public int PackageCategoryId { get; private set; }
+
+    public PackageCategoryType PackageCategoryType => (PackageCategoryType)PackageCategoryId;
 
     public PackageCategory? PackageCategory { get; private set; }
 
@@ -40,6 +44,10 @@ public sealed class Package : AggregateRoot
     public DateTime? Expire { get; private set; }
 
     public bool IsQuantityAllowed { get; private set; }
+
+    public bool FullPeriod { get; private set; }
+
+    public bool PostPaid { get; private set; }
 
     public IReadOnlyCollection<PackageFrequency> Frequencies => _frequencies.AsReadOnly();
 
@@ -54,9 +62,11 @@ public sealed class Package : AggregateRoot
         bool isQuantityAllowed,
         IEnumerable<PackageFrequencyDefinition> frequencies,
         IEnumerable<PackageServiceDefinition> services,
-        DateTime utcNow)
+        DateTime utcNow,
+        bool fullPeriod = false,
+        bool postPaid = false)
     {
-        var package = new Package(name, packageCategoryId, description, utcNow, start, expire, isQuantityAllowed);
+        var package = new Package(name, packageCategoryId, description, utcNow, start, expire, isQuantityAllowed, fullPeriod, postPaid);
         package.ReplaceFrequencies(frequencies, utcNow);
         package.ReplaceServices(services);
 
@@ -72,11 +82,13 @@ public sealed class Package : AggregateRoot
         bool isQuantityAllowed,
         IEnumerable<PackageFrequencyDefinition> frequencies,
         IEnumerable<PackageServiceDefinition> services,
-        DateTime utcNow)
+        DateTime utcNow,
+        bool fullPeriod = false,
+        bool postPaid = false)
     {
         var wasActive = IsActiveAt(utcNow);
 
-        UpdateCore(name, packageCategoryId, description, start, expire, isQuantityAllowed);
+        UpdateCore(name, packageCategoryId, description, start, expire, isQuantityAllowed, fullPeriod, postPaid);
         ReplaceFrequencies(frequencies, utcNow);
         ReplaceServices(services);
 
@@ -95,10 +107,17 @@ public sealed class Package : AggregateRoot
         string? description,
         DateTime? start,
         DateTime? expire,
-        bool isQuantityAllowed)
+        bool isQuantityAllowed,
+        bool fullPeriod,
+        bool postPaid)
     {
         Name = Guard.RequiredMaxLength(name, nameof(Name), 255);
         PackageCategoryId = Guard.PositiveId(packageCategoryId, nameof(PackageCategoryId));
+        if (!Enum.IsDefined((PackageCategoryType)PackageCategoryId))
+        {
+            throw new DomainException($"Package category {PackageCategoryId} is not supported.");
+        }
+
         Description = Guard.OptionalMaxLength(description, nameof(Description), 2000);
 
         if (start.HasValue && expire.HasValue && start.Value > expire.Value)
@@ -109,6 +128,8 @@ public sealed class Package : AggregateRoot
         Start = start;
         Expire = expire;
         IsQuantityAllowed = isQuantityAllowed;
+        FullPeriod = fullPeriod;
+        PostPaid = postPaid;
     }
 
     private void ReplaceFrequencies(IEnumerable<PackageFrequencyDefinition> frequencies, DateTime utcNow)

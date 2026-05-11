@@ -14,7 +14,7 @@ public sealed class CreatePackageCommandHandlerTests
     {
         var context = HandlerTestContext.Create();
         Package? addedPackage = null;
-        context.SetupReferences(categoryIds: [1], serviceIds: [101]);
+        context.SetupReferences(serviceIds: [101]);
         context.SetupPackageNameExists(exists: false);
         context.SetupAddPackage(package =>
         {
@@ -23,7 +23,10 @@ public sealed class CreatePackageCommandHandlerTests
         });
         context.SetupSaveChanges();
         var handler = context.CreateHandler();
-        var command = new CreatePackageCommand(ServiceTestData.CreatePackageDto(name: "  Premium  "));
+        var command = new CreatePackageCommand(ServiceTestData.CreatePackageDto(
+            name: "  Premium  ",
+            fullPeriod: true,
+            postPaid: true));
 
         var result = await handler.HandleAsync(command);
 
@@ -31,6 +34,8 @@ public sealed class CreatePackageCommandHandlerTests
         Assert.Equal("Premium", addedPackage.Name);
         Assert.Equal(100, result.Id);
         Assert.Equal("Premium", result.Name);
+        Assert.True(result.FullPeriod);
+        Assert.True(result.PostPaid);
         Assert.True(result.IsActive);
         Assert.Single(result.Frequencies);
         Assert.Single(result.Services);
@@ -41,7 +46,7 @@ public sealed class CreatePackageCommandHandlerTests
     public async Task HandleAsync_ThrowsConflictException_WhenPackageNameExists()
     {
         var context = HandlerTestContext.Create();
-        context.SetupReferences(categoryIds: [1], serviceIds: [101]);
+        context.SetupReferences(serviceIds: [101]);
         context.SetupPackageNameExists(exists: true);
         var handler = context.CreateHandler();
         var command = new CreatePackageCommand(ServiceTestData.CreatePackageDto(name: "Starter"));
@@ -57,7 +62,7 @@ public sealed class CreatePackageCommandHandlerTests
     public async Task HandleAsync_ThrowsApplicationValidationException_WhenReferencesDoNotExist()
     {
         var context = HandlerTestContext.Create();
-        context.SetupReferences(categoryIds: [], serviceIds: []);
+        context.SetupReferences(serviceIds: []);
         var handler = context.CreateHandler();
         var command = new CreatePackageCommand(ServiceTestData.CreatePackageDto(packageCategoryId: 99));
 
@@ -78,7 +83,7 @@ public sealed class UpdatePackageCommandHandlerTests
         var context = HandlerTestContext.Create();
         var package = ServiceTestData.Package(id: 5, name: "Starter");
         context.SetupPackage(5, package);
-        context.SetupReferences(categoryIds: [2], serviceIds: [102]);
+        context.SetupReferences(serviceIds: [102]);
         context.SetupPackageNameExists("Premium", excludedPackageId: 5, exists: false);
         context.SetupSaveChanges();
         var handler = context.UpdateHandler();
@@ -89,6 +94,8 @@ public sealed class UpdatePackageCommandHandlerTests
                 packageCategoryId: 2,
                 description: "Updated",
                 isQuantityAllowed: false,
+                fullPeriod: true,
+                postPaid: true,
                 frequencies: [ServiceTestData.FrequencyDto(name: "Weekly", frequency: 7)],
                 services: [ServiceTestData.ServiceDto(serviceId: 102, defaultInstances: 2, minimumInstances: 1)]));
 
@@ -99,6 +106,8 @@ public sealed class UpdatePackageCommandHandlerTests
         Assert.Equal(2, package.PackageCategoryId);
         Assert.Equal("Updated", package.Description);
         Assert.False(package.IsQuantityAllowed);
+        Assert.True(package.FullPeriod);
+        Assert.True(package.PostPaid);
         Assert.Contains(package.Frequencies, frequency => frequency.Name == "Weekly" && frequency.Frequency == 7);
         Assert.Contains(package.Services, service => service.ServiceId == 102 && service.DefaultInstances == 2);
         context.PackageRepository.Verify(
@@ -113,7 +122,7 @@ public sealed class UpdatePackageCommandHandlerTests
         var context = HandlerTestContext.Create();
         var package = ServiceTestData.Package(id: 5, name: "Starter");
         context.SetupPackage(5, package);
-        context.SetupReferences(categoryIds: [1], serviceIds: [101]);
+        context.SetupReferences(serviceIds: [101]);
         context.SetupSaveChanges();
         var handler = context.UpdateHandler();
         var command = new UpdatePackageCommand(5, ServiceTestData.UpdatePackageDto(name: "starter"));
@@ -146,7 +155,7 @@ public sealed class UpdatePackageCommandHandlerTests
     {
         var context = HandlerTestContext.Create();
         context.SetupPackage(5, ServiceTestData.Package(id: 5, name: "Starter"));
-        context.SetupReferences(categoryIds: [1], serviceIds: [101]);
+        context.SetupReferences(serviceIds: [101]);
         context.SetupPackageNameExists("Existing", excludedPackageId: 5, exists: true);
         var handler = context.UpdateHandler();
         var command = new UpdatePackageCommand(5, ServiceTestData.UpdatePackageDto(name: "Existing"));
@@ -175,7 +184,7 @@ public sealed class PatchPackageCommandHandlerTests
             isQuantityAllowed: true);
         SetSingleChildIds(package);
         context.SetupPackage(5, package);
-        context.SetupReferences(categoryIds: [2], serviceIds: [101]);
+        context.SetupReferences(serviceIds: [101]);
         context.SetupPackageNameExists("Premium", excludedPackageId: 5, exists: false);
         context.SetupSaveChanges();
         var handler = context.PatchHandler();
@@ -187,7 +196,9 @@ public sealed class PatchPackageCommandHandlerTests
                 PackageCategoryId = 2,
                 ClearDescription = true,
                 ClearStart = true,
-                IsQuantityAllowed = false
+                IsQuantityAllowed = false,
+                FullPeriod = true,
+                PostPaid = true
             });
 
         await handler.HandleAsync(command);
@@ -198,6 +209,8 @@ public sealed class PatchPackageCommandHandlerTests
         Assert.Null(package.Start);
         Assert.Equal(expire, package.Expire);
         Assert.False(package.IsQuantityAllowed);
+        Assert.True(package.FullPeriod);
+        Assert.True(package.PostPaid);
         Assert.Single(package.Frequencies);
         Assert.Single(package.Services);
         context.UnitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -210,7 +223,7 @@ public sealed class PatchPackageCommandHandlerTests
         var package = ServiceTestData.Package(id: 5, expire: ServiceTestData.UtcNow.AddDays(3));
         SetSingleChildIds(package);
         context.SetupPackage(5, package);
-        context.SetupReferences(categoryIds: [1], serviceIds: [102]);
+        context.SetupReferences(serviceIds: [102]);
         context.SetupSaveChanges();
         var handler = context.PatchHandler();
         var command = new PatchPackageCommand(
@@ -249,7 +262,7 @@ public sealed class PatchPackageCommandHandlerTests
     {
         var context = HandlerTestContext.Create();
         context.SetupPackage(5, ServiceTestData.Package(id: 5, name: "Starter"));
-        context.SetupReferences(categoryIds: [1], serviceIds: [101]);
+        context.SetupReferences(serviceIds: [101]);
         context.SetupPackageNameExists("Existing", excludedPackageId: 5, exists: true);
         var handler = context.PatchHandler();
         var command = new PatchPackageCommand(
@@ -335,12 +348,8 @@ internal sealed class HandlerTestContext
             .ReturnsAsync(package);
     }
 
-    public void SetupReferences(int[] categoryIds, int[] serviceIds)
+    public void SetupReferences(int[] serviceIds)
     {
-        PackageRepository
-            .Setup(repository => repository.CategoryExistsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .Returns<int, CancellationToken>((id, _) => Task.FromResult(categoryIds.Contains(id)));
-
         IReadOnlyList<ServiceEntity> services = serviceIds
             .Select(id => ServiceTestData.Service(id))
             .ToArray();
@@ -404,6 +413,6 @@ internal sealed class HandlerTestContext
 
     private PackageReferenceValidator ReferenceValidator()
     {
-        return new PackageReferenceValidator(PackageRepository.Object, ServiceRepository.Object);
+        return new PackageReferenceValidator(ServiceRepository.Object);
     }
 }

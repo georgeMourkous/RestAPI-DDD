@@ -1,4 +1,4 @@
-namespace RestApiDdd.Api.Versioning;
+namespace RestApiDdd.Service.Versioning;
 
 public enum ApiVersion
 {

@@ -5,11 +5,12 @@ using RestApiDdd.Api.Security;
 using RestApiDdd.Api.Versioning;
 using RestApiDdd.Service.Abstractions;
 using RestApiDdd.Service.Dtos;
+using RestApiDdd.Service.Versioning;
 
 namespace RestApiDdd.Api.Controllers;
 
 [ApiController]
-[Route("api/packages/{version}")]
+[Route("api/{version}/packages/")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [RoleAuthorize("Admin", "PackageManager", "PackageReader")]
 [SupportedApiVersions(ApiVersion.v1)]

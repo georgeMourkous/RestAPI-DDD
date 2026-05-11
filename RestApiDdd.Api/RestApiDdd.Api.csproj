@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="AWS.Logger.Core" Version="4.0.3" />
-    <PackageReference Include="AWSSDK.SimpleSystemsManagement" Version="4.0.7.13" />
+    <PackageReference Include="AWSSDK.SimpleSystemsManagement" Version="4.0.7.14" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
     <PackageReference Include="AWS.Logger.SeriLog" Version="4.0.2" />

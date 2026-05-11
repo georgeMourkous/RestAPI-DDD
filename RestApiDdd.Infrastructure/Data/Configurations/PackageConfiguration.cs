@@ -35,6 +35,14 @@ internal sealed class PackageConfiguration : IEntityTypeConfiguration<Package>
         builder.Property(package => package.IsQuantityAllowed)
             .IsRequired();
 
+        builder.Property(package => package.FullPeriod)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(package => package.PostPaid)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.HasOne(package => package.PackageCategory)
             .WithMany()
             .HasForeignKey(package => package.PackageCategoryId)

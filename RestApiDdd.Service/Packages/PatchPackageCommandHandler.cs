@@ -63,7 +63,9 @@ internal sealed class PatchPackageCommandHandler(
             command.Package.IsQuantityAllowed ?? package.IsQuantityAllowed,
             frequencyDetails.ToFrequencyDefinitions(),
             serviceDetails.ToServiceDefinitions(),
-            clock.UtcNow);
+            clock.UtcNow,
+            command.Package.FullPeriod ?? package.FullPeriod,
+            command.Package.PostPaid ?? package.PostPaid);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

@@ -13,12 +13,4 @@ public interface IPackageRepository : IRepository<Package>
     Task<PackageCategory?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<PackageCategory>> ListCategoriesAsync(CancellationToken cancellationToken = default);
-
-    Task<bool> CategoryExistsAsync(int id, CancellationToken cancellationToken = default);
-
-    Task AddCategoryAsync(PackageCategory category, CancellationToken cancellationToken = default);
-
-    void UpdateCategory(PackageCategory category);
-
-    void RemoveCategory(PackageCategory category);
 }

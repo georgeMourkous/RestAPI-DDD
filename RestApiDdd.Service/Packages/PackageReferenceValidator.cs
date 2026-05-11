@@ -1,10 +1,10 @@
+using RestApiDdd.Domain.Entities;
 using RestApiDdd.Service.Abstractions;
 using RestApiDdd.Service.Exceptions;
 
 namespace RestApiDdd.Service.Packages;
 
 internal sealed class PackageReferenceValidator(
-    IPackageRepository packageRepository,
     IServiceRepository serviceRepository)
 {
     public async Task EnsureCanUseReferencesAsync(
@@ -13,7 +13,7 @@ internal sealed class PackageReferenceValidator(
         CancellationToken cancellationToken)
     {
         var errors = new List<string>();
-        if (!await packageRepository.CategoryExistsAsync(packageCategoryId, cancellationToken))
+        if (!Enum.IsDefined((PackageCategoryType)packageCategoryId))
         {
             errors.Add($"Package category {packageCategoryId} does not exist.");
         }

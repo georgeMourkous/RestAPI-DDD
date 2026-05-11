@@ -6,6 +6,17 @@ namespace RestApiDdd.Domain.Tests;
 public sealed class PackageCategoryTests
 {
     [Fact]
+    public void PackageCategoryType_ValuesMatchSeededIds()
+    {
+        Assert.Equal(1, (int)PackageCategoryType.SharePlan);
+        Assert.Equal(2, (int)PackageCategoryType.Default);
+        Assert.Equal(3, (int)PackageCategoryType.BillingActivation);
+        Assert.Equal(4, (int)PackageCategoryType.SharePlanAddOn);
+        Assert.Equal(5, (int)PackageCategoryType.OneTimeBilling);
+        Assert.Equal(6, (int)PackageCategoryType.GlobalAddOn);
+    }
+
+    [Fact]
     public void Constructor_SetsTrimmedValues()
     {
         var category = new PackageCategory("  Wellness  ", sortOrder: 2, visible: true);

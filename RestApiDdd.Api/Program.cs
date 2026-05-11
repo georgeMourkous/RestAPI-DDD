@@ -79,6 +79,9 @@ try
 
     app.UseHttpsRedirection();
 
+    app.UseRouting();
+    app.UseMiddleware<ApiVersionedDtoMiddleware>();
+
     app.UseAuthentication();
     app.UseAuthorization();
 

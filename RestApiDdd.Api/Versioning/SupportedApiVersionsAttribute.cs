@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using RestApiDdd.Api.Controllers;
+using RestApiDdd.Service.Versioning;
 
 namespace RestApiDdd.Api.Versioning;
 

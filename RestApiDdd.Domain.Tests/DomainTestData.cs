@@ -31,7 +31,9 @@ internal static class DomainTestData
         DateTime? expire = null,
         IEnumerable<PackageFrequencyDefinition>? frequencies = null,
         IEnumerable<PackageServiceDefinition>? services = null,
-        DateTime? utcNow = null)
+        DateTime? utcNow = null,
+        bool fullPeriod = false,
+        bool postPaid = false)
     {
         return Package.Create(
             "Starter",
@@ -42,7 +44,9 @@ internal static class DomainTestData
             isQuantityAllowed: true,
             frequencies ?? [FrequencyDefinition()],
             services ?? [ServiceDefinition()],
-            utcNow ?? UtcNow);
+            utcNow ?? UtcNow,
+            fullPeriod,
+            postPaid);
     }
 
     public static void SetEntityId(Entity entity, int id)

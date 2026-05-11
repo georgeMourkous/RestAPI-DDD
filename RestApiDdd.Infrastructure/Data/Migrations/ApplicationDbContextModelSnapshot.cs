@@ -42,6 +42,11 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("Expire")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("FullPeriod")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("IsQuantityAllowed")
                         .HasColumnType("bit");
 
@@ -52,6 +57,11 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
 
                     b.Property<int>("PackageCategoryId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("PostPaid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("Start")
                         .HasColumnType("datetime2");
@@ -96,9 +106,44 @@ namespace RestApiDdd.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Default",
+                            Name = "Share Plan",
                             SortOrder = 1,
+                            Visible = false
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Default",
+                            SortOrder = 2,
                             Visible = true
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Billing Activation",
+                            SortOrder = 3,
+                            Visible = true
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Share Plan Add-on",
+                            SortOrder = 4,
+                            Visible = true
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "One Time Billing",
+                            SortOrder = 5,
+                            Visible = true
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Global Add-on",
+                            SortOrder = 6,
+                            Visible = false
                         });
                 });
 
