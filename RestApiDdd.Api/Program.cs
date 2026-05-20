@@ -79,6 +79,8 @@ try
 
     app.UseHttpsRedirection();
 
+    app.UseMiddleware<PostSearchRequestMethodOverrideMiddleware>();
+
     app.UseRouting();
     app.UseMiddleware<ApiVersionedDtoMiddleware>();
 
