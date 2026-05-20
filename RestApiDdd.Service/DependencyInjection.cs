@@ -3,6 +3,7 @@ using RestApiDdd.Service.Abstractions;
 using RestApiDdd.Service.Cqrs;
 using RestApiDdd.Service.Dtos;
 using RestApiDdd.Service.Packages;
+using RestApiDdd.Service.SensorReadings;
 
 namespace RestApiDdd.Service;
 
@@ -15,6 +16,7 @@ public static class DependencyInjection
 
         services.AddScoped<IQueryHandler<GetPackagesQuery, IReadOnlyList<PackageDto>>, GetPackagesQueryHandler>();
         services.AddScoped<IQueryHandler<GetPackageByIdQuery, PackageDto>, GetPackageByIdQueryHandler>();
+        services.AddScoped<IQueryHandler<GetSensorReadingsQuery, IReadOnlyList<SensorReadingDto>>, GetSensorReadingsQueryHandler>();
         services.AddScoped<PackageReferenceValidator>();
         services.AddScoped<ICommandHandler<CreatePackageCommand, PackageDto>, CreatePackageCommandHandler>();
         services.AddScoped<ICommandHandler<UpdatePackageCommand, Unit>, UpdatePackageCommandHandler>();

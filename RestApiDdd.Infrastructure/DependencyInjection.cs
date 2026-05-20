@@ -41,11 +41,13 @@ public static class DependencyInjection
 
         services.AddScoped<IDomainEventDispatcher, LoggingDomainEventDispatcher>();
         services.AddSingleton(databaseOptions);
+        services.AddSingleton<ISqlConnectionFactory>(_ => new SqlConnectionFactory(connectionString, databaseOptions));
         services.AddSingleton<ICacheProvider, MemoryCacheProvider>();
         services.AddScoped<IDatabaseResilienceExecutor, DatabaseResilienceExecutor>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         services.AddScoped<IPackageRepository, PackageRepository>();
+        services.AddScoped<ISensorReadingRepository, SensorReadingRepository>();
         services.AddScoped<IServiceRepository, ServiceRepository>();
         services.AddScoped<IServiceStatusTypeRepository, ServiceStatusTypeRepository>();
 
